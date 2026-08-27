@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Hand Landmarker 本地演示</title>
+    <link rel="stylesheet" href="./styles/app.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="hero">
+        <div>
+          <p class="eyebrow">LOCAL · ON-DEVICE</p>
+          <h1>手部关键点与手势识别</h1>
+          <p class="subtitle">摄像头画面只在当前浏览器中处理，不会上传。</p>
+        </div>
+        <div class="model-pill">
+          <span class="status-dot" aria-hidden="true"></span>
+          <span>模型</span>
+          <strong id="model-status">正在加载</strong>
+        </div>
+      </header>
+
+      <section class="workspace" aria-label="摄像头手势识别工作区">
+        <div class="viewer-card">
+          <div class="viewer-toolbar">
+            <span class="camera-label">电脑摄像头</span>
+            <span id="camera-status" class="camera-status">未启动</span>
+          </div>
+          <div class="viewer" id="viewer">
+            <video id="camera" playsinline muted></video>
+            <canvas id="overlay" aria-hidden="true"></canvas>
+            <div class="empty-state" id="empty-state">
+              <div class="hand-icon" aria-hidden="true">✋</div>
+              <p>点击下方按钮开始识别</p>
+              <span>首次使用时请允许浏览器访问摄像头</span>
+            </div>
+          </div>
+          <div class="controls">
+            <button id="start-camera" class="button button-primary" type="button" disabled>
+              启动摄像头
+            </button>
+            <button id="stop-camera" class="button button-secondary" type="button" disabled>
+              停止
+            </button>
+          </div>
+          <p id="error-message" class="error-message" role="alert" aria-live="assertive"></p>
+        </div>
+
+        <aside class="metrics-card" aria-label="识别结果">
+          <div class="metric-row">
+            <span>检测到的手</span>
+            <strong id="hand-count">0</strong>
+          </div>
+          <div class="metric-row">
+            <span>左右手</span>
+            <strong id="handedness">—</strong>
+          </div>
+
+          <div class="gesture-result">
+            <span class="result-label">当前手势</span>
+            <strong id="gesture-label">等待启动</strong>
+            <div class="confidence-row">
+              <span>识别置信度</span>
+              <span id="gesture-confidence">0%</span>
+            </div>
+            <div class="confidence-track" aria-hidden="true">
+              <div id="confidence-fill" class="confidence-fill"></div>
+            </div>
+          </div>
+
+          <div class="legend">
+            <h2>支持的手势</h2>
+            <div class="gesture-grid">
+              <span>✋ 张开</span>
+              <span>✊ 握拳/聚合</span>
+              <span>👌 OK</span>
+              <span>☝️ 指向</span>
+            </div>
+          </div>
+
+          <p class="hint">请让手掌完整出现在画面中；正对摄像头时识别更稳定。</p>
+        </aside>
+      </section>
+    </main>
+
+    <script type="module" src="./src/app.js"></script>
+  </body>
+</html>

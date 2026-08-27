@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download the pinned MediaPipe browser runtime and Hand Landmarker model."""
+"""Download the pinned MediaPipe browser runtime and Gesture Recognizer model."""
 
 from __future__ import annotations
 
@@ -18,8 +18,8 @@ TASKS_VISION_URL = (
     f"tasks-vision-{TASKS_VISION_VERSION}.tgz"
 )
 MODEL_URL = (
-    "https://storage.googleapis.com/mediapipe-models/hand_landmarker/"
-    "hand_landmarker/float16/1/hand_landmarker.task"
+    "https://storage.googleapis.com/mediapipe-models/gesture_recognizer/"
+    "gesture_recognizer/float16/1/gesture_recognizer.task"
 )
 PACKAGE_MEMBERS = (
     "package/vision_bundle.mjs",
@@ -79,8 +79,8 @@ def install_runtime(archive_data: bytes) -> None:
 def main() -> None:
     print(f"Downloading MediaPipe Tasks Vision {TASKS_VISION_VERSION}...")
     install_runtime(download(TASKS_VISION_URL))
-    print("Downloading Hand Landmarker float16 model...")
-    atomic_write(ROOT / "models/hand_landmarker.task", download(MODEL_URL))
+    print("Downloading Gesture Recognizer float16 model...")
+    atomic_write(ROOT / "models/gesture_recognizer.task", download(MODEL_URL))
     print(f"Assets installed under {ROOT}")
 
 

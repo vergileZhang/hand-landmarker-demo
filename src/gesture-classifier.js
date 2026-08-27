@@ -7,6 +7,16 @@ const FINGER_JOINTS = [
 
 const UNKNOWN = Object.freeze({ label: '未知', confidence: 0 });
 
+const OFFICIAL_GESTURE_LABELS = Object.freeze({
+  Closed_Fist: '握拳',
+  Open_Palm: '张开',
+  Pointing_Up: '向上指',
+  Thumb_Down: '拇指向下',
+  Thumb_Up: '拇指向上',
+  Victory: '胜利/V',
+  ILoveYou: '我爱你',
+});
+
 export function distance(a, b) {
   return Math.hypot(
     (a?.x ?? 0) - (b?.x ?? 0),
@@ -55,6 +65,14 @@ function fingerState(landmarks, finger) {
 
 function roundedConfidence(value) {
   return Math.round(Math.max(0, Math.min(1, value)) * 100) / 100;
+}
+
+export function mapOfficialGesture(category) {
+  const label = OFFICIAL_GESTURE_LABELS[category?.categoryName] ?? '未知';
+  return {
+    label,
+    confidence: roundedConfidence(Number(category?.score) || 0),
+  };
 }
 
 export function classifyGesture(landmarks) {
@@ -111,6 +129,12 @@ export function classifyGesture(landmarks) {
   }
 
   return { label: '未知', confidence: 0.35 };
+}
+
+export function resolveGesture(landmarks, officialCategory) {
+  const custom = classifyGesture(landmarks);
+  if (custom.label === 'OK') return custom;
+  return mapOfficialGesture(officialCategory);
 }
 
 export class GestureSmoother {

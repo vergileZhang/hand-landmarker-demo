@@ -14,7 +14,7 @@ const requiredAssets = [
   'vendor/mediapipe/wasm/vision_wasm_module_internal.wasm',
   'vendor/mediapipe/wasm/vision_wasm_nosimd_internal.js',
   'vendor/mediapipe/wasm/vision_wasm_nosimd_internal.wasm',
-  'models/hand_landmarker.task',
+  'models/gesture_recognizer.task',
 ];
 
 test('all MediaPipe runtime assets are stored locally', async () => {
@@ -62,7 +62,9 @@ test('frontend entrypoint uses local MediaPipe runtime and model', async () => {
   const source = await readFile(resolve(ROOT, 'src/app.js'), 'utf8');
   assert.match(source, /\.\.\/vendor\/mediapipe\/vision_bundle\.mjs/);
   assert.match(source, /\.\/vendor\/mediapipe\/wasm/);
-  assert.match(source, /\.\/models\/hand_landmarker\.task/);
+  assert.match(source, /GestureRecognizer/);
+  assert.match(source, /recognizeForVideo/);
+  assert.match(source, /\.\/models\/gesture_recognizer\.task/);
   assert.match(source, /runningMode:\s*['"]VIDEO['"]/);
   assert.match(source, /getUserMedia/);
   assert.match(source, /getTracks\(\)/);

@@ -1,12 +1,18 @@
-# Hand Landmarker 本地演示
+# Gesture Recognizer 本地演示
 
-这是一个完全在本机浏览器运行的电脑摄像头手部识别 Demo。它使用 MediaPipe Hand Landmarker 输出 21 个关键点，并通过关键点几何关系显示以下状态：
+这是一个完全在本机浏览器运行的电脑摄像头手部识别 Demo。它使用 MediaPipe Gesture Recognizer 输出 21 个关键点，并识别以下八种手势：
 
 - 张开
-- 握拳/聚合
+- 握拳
 - OK
-- 指向
+- 向上指
+- 拇指向上
+- 拇指向下
+- 胜利/V
+- 我爱你
 - 未知
+
+其中七种来自 MediaPipe 官方 canned gesture 模型；OK 由关键点几何规则补充，并优先于官方分类结果。
 
 摄像头画面不会上传到服务器；Python 进程只负责提供本地静态文件。
 
@@ -39,8 +45,8 @@ python3 scripts/serve.py --port 8080
 index.html                         页面结构
 styles/app.css                    页面样式
 src/app.js                        摄像头、推理和关键点绘制
-src/gesture-classifier.js         基础手势分类与视频平滑
-models/hand_landmarker.task       本地 MediaPipe 模型
+src/gesture-classifier.js         官方标签映射、OK 补充与视频平滑
+models/gesture_recognizer.task    本地 MediaPipe 模型
 vendor/mediapipe/                 本地 JavaScript 和 WASM 运行库
 scripts/download-assets.py        重新下载固定版本资源
 scripts/serve.py                  本地静态服务器
@@ -72,7 +78,7 @@ tests/                             自动化测试
 python3 scripts/download-assets.py
 ```
 
-该脚本固定下载 MediaPipe Tasks Vision `1.0.1` 和官方 float16 Hand Landmarker 模型。
+该脚本固定下载 MediaPipe Tasks Vision `1.0.1` 和官方 float16 Gesture Recognizer 模型。
 
 ## 测试
 
@@ -82,4 +88,4 @@ python3 scripts/download-assets.py
 node --test tests/*.test.mjs
 ```
 
-基础手势是演示级几何规则，不是经过用户专属数据训练的分类模型。不同手型、拍摄角度和遮挡可能需要进一步调整阈值。
+官方七类手势使用 MediaPipe 预训练模型；OK 是演示级几何规则。不同手型、拍摄角度和遮挡可能需要进一步调整 OK 阈值。

@@ -1,5 +1,5 @@
-import { FilesetResolver, HandLandmarker } from '../vendor/mediapipe/vision_bundle.mjs';
-import { GestureSmoother, classifyGesture } from './gesture-classifier.js';
+import { FilesetResolver, GestureRecognizer } from '../vendor/mediapipe/vision_bundle.mjs';
+import { GestureSmoother, resolveGesture } from './gesture-classifier.js';
 
 const HAND_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -17,7 +17,7 @@ const elements = Object.fromEntries([
 
 const context = elements.overlay.getContext('2d');
 const smoothers = [new GestureSmoother(5), new GestureSmoother(5)];
-let handLandmarker = null;
+let gestureRecognizer = null;
 let mediaStream = null;
 let animationFrame = null;
 let lastVideoTime = -1;
@@ -117,8 +117,9 @@ function renderResults(results) {
     drawHand(landmarks, index);
     const handedness = results.handedness?.[index]?.[0];
     labels.push(localizeHandedness(handedness?.categoryName));
-    gestures.push(smoothers[index]?.push(classifyGesture(landmarks))
-      ?? classifyGesture(landmarks));
+    const officialGesture = results.gestures?.[index]?.[0];
+    const resolvedGesture = resolveGesture(landmarks, officialGesture);
+    gestures.push(smoothers[index]?.push(resolvedGesture) ?? resolvedGesture);
   });
 
   elements.handedness.textContent = labels.join('、');
@@ -139,7 +140,7 @@ function predictFrame() {
   if (elements.camera.currentTime !== lastVideoTime) {
     lastVideoTime = elements.camera.currentTime;
     try {
-      renderResults(handLandmarker.detectForVideo(elements.camera, performance.now()));
+      renderResults(gestureRecognizer.recognizeForVideo(elements.camera, performance.now()));
     } catch (error) {
       setError(`识别运行失败：${error.message}`);
       stopCamera();
@@ -150,7 +151,7 @@ function predictFrame() {
 }
 
 async function startCamera() {
-  if (!handLandmarker || mediaStream) return;
+  if (!gestureRecognizer || mediaStream) return;
   setError();
   elements['start-camera'].disabled = true;
   setCameraStatus('正在请求权限');
@@ -197,7 +198,7 @@ function stopCamera() {
   elements.camera.srcObject = null;
   context.clearRect(0, 0, elements.overlay.width, elements.overlay.height);
   elements['empty-state'].classList.remove('hidden');
-  elements['start-camera'].disabled = !handLandmarker;
+  elements['start-camera'].disabled = !gestureRecognizer;
   elements['stop-camera'].disabled = true;
   setCameraStatus('已停止');
   resetResult();
@@ -212,13 +213,16 @@ async function loadModel() {
 
   try {
     const vision = await FilesetResolver.forVisionTasks('./vendor/mediapipe/wasm');
-    handLandmarker = await HandLandmarker.createFromOptions(vision, {
-      baseOptions: { modelAssetPath: './models/hand_landmarker.task' },
+    gestureRecognizer = await GestureRecognizer.createFromOptions(vision, {
+      baseOptions: { modelAssetPath: './models/gesture_recognizer.task' },
       runningMode: 'VIDEO',
       numHands: 2,
       minHandDetectionConfidence: 0.55,
       minHandPresenceConfidence: 0.55,
       minTrackingConfidence: 0.5,
+      cannedGesturesClassifierOptions: {
+        scoreThreshold: 0.5,
+      },
     });
     setModelStatus('已就绪', 'ready');
     elements['start-camera'].disabled = false;

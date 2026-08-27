@@ -5,6 +5,8 @@ import {
   GestureSmoother,
   classifyGesture,
   distance,
+  mapOfficialGesture,
+  resolveGesture,
 } from '../src/gesture-classifier.js';
 
 const point = (x, y, z = 0) => ({ x, y, z });
@@ -85,6 +87,52 @@ test('classification is invariant to translation and scale', () => {
 test('invalid landmarks return unknown without throwing', () => {
   assert.deepEqual(classifyGesture([]), { label: '未知', confidence: 0 });
   assert.deepEqual(classifyGesture(null), { label: '未知', confidence: 0 });
+});
+
+for (const [categoryName, expected] of [
+  ['Closed_Fist', '握拳'],
+  ['Open_Palm', '张开'],
+  ['Pointing_Up', '向上指'],
+  ['Thumb_Down', '拇指向下'],
+  ['Thumb_Up', '拇指向上'],
+  ['Victory', '胜利/V'],
+  ['ILoveYou', '我爱你'],
+]) {
+  test(`maps official gesture ${categoryName}`, () => {
+    assert.deepEqual(mapOfficialGesture({ categoryName, score: 0.87 }), {
+      label: expected,
+      confidence: 0.87,
+    });
+  });
+}
+
+test('maps None and unsupported official categories to unknown', () => {
+  assert.deepEqual(mapOfficialGesture({ categoryName: 'None', score: 0.76 }), {
+    label: '未知',
+    confidence: 0.76,
+  });
+  assert.deepEqual(mapOfficialGesture({ categoryName: 'Rock', score: 0.91 }), {
+    label: '未知',
+    confidence: 0.91,
+  });
+  assert.deepEqual(mapOfficialGesture(undefined), {
+    label: '未知',
+    confidence: 0,
+  });
+});
+
+test('custom OK detection overrides the official canned gesture', () => {
+  assert.deepEqual(
+    resolveGesture(okGesture(), { categoryName: 'Open_Palm', score: 0.93 }),
+    classifyGesture(okGesture()),
+  );
+});
+
+test('official gesture wins when landmarks are not OK', () => {
+  assert.deepEqual(
+    resolveGesture(openPalm(), { categoryName: 'Victory', score: 0.82 }),
+    { label: '胜利/V', confidence: 0.82 },
+  );
 });
 
 test('gesture smoother returns the majority result in its window', () => {

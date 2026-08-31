@@ -2,7 +2,7 @@
 
 ## 目标
 
-在 `/Users/zwj/Documents/project/hand-landmarker-demo` 内部署一个完全独立的电脑摄像头手部识别演示。浏览器在本机完成推理，展示摄像头画面、手部骨架、21 个关键点、左右手和基础手势，不向远端上传视频。
+在 `hand-landmarker-demo` 内部署一个完全独立的电脑摄像头手部识别演示。浏览器在本机完成推理，展示摄像头画面、手部骨架、21 个关键点、左右手和基础手势，不向远端上传视频。
 
 ## 技术方案
 
@@ -17,7 +17,7 @@
 项目的所有新增文件只放在：
 
 ```text
-/Users/zwj/Documents/project/hand-landmarker-demo/
+hand-landmarker-demo/
 ```
 
 目录职责：

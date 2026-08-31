@@ -1,5 +1,7 @@
 # Gesture Recognizer 本地演示
 
+项目需求、方案决策与部署过程见 [CONVERSATION.md](./CONVERSATION.md)。
+
 这是一个完全在本机浏览器运行的电脑摄像头手部识别 Demo。它使用 MediaPipe Gesture Recognizer 输出 21 个关键点，并识别以下八种手势：
 
 - 张开
@@ -21,7 +23,7 @@
 系统需要 Python 3，项目不需要安装 Node.js 或其他 Python 依赖。
 
 ```bash
-cd /Users/zwj/Documents/project/hand-landmarker-demo
+cd hand-landmarker-demo
 python3 scripts/serve.py
 ```
 

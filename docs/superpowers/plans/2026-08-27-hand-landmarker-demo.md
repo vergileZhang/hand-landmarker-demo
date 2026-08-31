@@ -37,7 +37,7 @@ Create synthetic 21-point fixtures for open palm, fist, OK, pointing, and unknow
 Run:
 
 ```bash
-/Users/zwj/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/gesture-classifier.test.mjs
+node --test tests/gesture-classifier.test.mjs
 ```
 
 Expected: failure because `src/gesture-classifier.js` does not exist.
@@ -79,7 +79,7 @@ Assert that all required local asset paths exist, have non-zero sizes, and no ap
 Run:
 
 ```bash
-/Users/zwj/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/package.test.mjs
+node --test tests/package.test.mjs
 ```
 
 Expected: failure listing missing local assets.
@@ -130,7 +130,7 @@ Mirror both video and canvas, resize the canvas to video dimensions, run one inf
 Run:
 
 ```bash
-/Users/zwj/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node --test tests/*.test.mjs
+node --test tests/*.test.mjs
 ```
 
 Expected: all tests pass.
@@ -177,4 +177,4 @@ Open `http://127.0.0.1:8000`, check there are no initial JavaScript errors, star
 
 - [ ] **Step 4: Final repository audit**
 
-Run tests again, inspect `git status`, and confirm every new file is under `/Users/zwj/Documents/project/hand-landmarker-demo`.
+Run tests again, inspect `git status`, and confirm every new file is under `hand-landmarker-demo/`.

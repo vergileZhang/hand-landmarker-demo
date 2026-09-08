@@ -22,6 +22,18 @@
         </div>
       </header>
 
+      <section class="scenario-switcher" aria-label="Demo 场景">
+        <button id="scenario-passive" class="scenario-tab active" data-scenario="passive" type="button">
+          <span>01</span><strong>被动响应型</strong><small>AI 发起确认，手势作答</small>
+        </button>
+        <button id="scenario-wake" class="scenario-tab" data-scenario="wake" type="button">
+          <span>02</span><strong>用户唤醒型</strong><small>拇指唤醒直播快捷控制</small>
+        </button>
+        <button id="scenario-continuous" class="scenario-tab" data-scenario="continuous" type="button">
+          <span>03</span><strong>持续监听型</strong><small>手势连续控制文档翻页</small>
+        </button>
+      </section>
+
       <section class="workspace" aria-label="摄像头手势识别工作区">
         <div class="viewer-card">
           <div class="viewer-toolbar">
@@ -70,6 +82,11 @@
             </div>
           </div>
 
+          <div class="scenario-summary">
+            <span>当前交互状态</span>
+            <strong id="scenario-state">等待启动</strong>
+          </div>
+
           <div class="legend">
             <h2>支持的手势</h2>
             <div class="gesture-grid">
@@ -85,6 +102,56 @@
           </div>
 
           <p class="hint">请让手掌完整出现在画面中；正对摄像头时识别更稳定。</p>
+        </aside>
+      </section>
+
+      <section class="scenario-console" aria-labelledby="scenario-title">
+        <div class="scenario-console-header">
+          <div>
+            <p class="eyebrow">INTERACTION DEMO</p>
+            <h2 id="scenario-title">被动响应型 · AI 确认</h2>
+          </div>
+          <div class="scenario-controls">
+            <button id="start-scenario" class="button button-primary" type="button" disabled>启动当前场景</button>
+            <button id="stop-scenario" class="button button-secondary" type="button" disabled>结束场景</button>
+          </div>
+        </div>
+
+        <div id="scenario-stage" class="scenario-stage">
+          <article id="passive-stage" class="demo-stage passive-stage">
+            <div class="app-window">
+              <div class="window-title">AI 会议助手</div>
+              <h3>会议摘要已生成，是否保存到本地？</h3>
+              <p>已整理 6 项结论与 3 项待办，等待你的手势确认。</p>
+              <div class="gesture-help"><span>👍 保存</span><span>👌 内容正确</span><span>👎 取消</span><span>✋ 稍后处理</span></div>
+              <div id="passive-result" class="stage-result">等待启动</div>
+            </div>
+          </article>
+
+          <article id="wake-stage" class="demo-stage live-stage" hidden>
+            <div class="live-screen">
+              <div class="live-badge">● LIVE</div>
+              <div class="live-content"><span>当前直播素材</span><strong id="live-scene">主讲画面</strong></div>
+              <div id="live-product" class="live-overlay product-card" hidden>商品卡 · Gesture Cam</div>
+              <div id="live-follow" class="live-overlay follow-card" hidden>喜欢直播，点个关注吧</div>
+            </div>
+            <div class="gesture-help"><span>👍 持续 1 秒唤醒</span><span>✌️ 切换素材</span><span>👌 商品卡</span><span>☝️ 关注提示</span><span>✋ 隐藏浮层</span><span>✊ 返回待机</span></div>
+          </article>
+
+          <article id="continuous-stage" class="demo-stage document-stage" hidden>
+            <div class="document-toolbar"><span>产品方案.pdf</span><strong id="document-page-label">1 / 4</strong></div>
+            <div id="document-page" class="document-page">
+              <span>01 / PROJECT OVERVIEW</span>
+              <h3>手势驱动的人机交互</h3>
+              <p>使用摄像头与本地模型，把自然动作转化为可执行事件。</p>
+            </div>
+            <div class="gesture-help"><span>👍 下一页</span><span>👎 上一页</span><span>✋ 暂停/继续</span><span>✊ 退出</span></div>
+          </article>
+        </div>
+
+        <aside class="event-panel">
+          <div class="event-header"><strong>工具事件日志</strong><span>MCP-ready event stream</span></div>
+          <ol id="event-log" aria-live="polite"><li class="empty-log">启动场景后，手势动作会记录在这里</li></ol>
         </aside>
       </section>
     </main>

@@ -26,7 +26,10 @@ test('all MediaPipe runtime assets are stored locally', async () => {
 });
 
 test('application source has no remote runtime imports', async () => {
-  const candidates = ['index.html', 'src/app.js', 'src/gesture-classifier.js'];
+  const candidates = [
+    'index.html', 'src/app.js', 'src/gesture-classifier.js', 'src/gesture-trigger.js',
+    'src/scenario-engine.js', 'src/demo-view.js',
+  ];
   const forbidden = /(?:https?:)?\/\/(?:cdn\.jsdelivr\.net|unpkg\.com|storage\.googleapis\.com)/i;
   for (const relativePath of candidates) {
     try {
@@ -52,9 +55,21 @@ test('page exposes the camera demo contract', async () => {
     'gesture-label',
     'gesture-confidence',
     'error-message',
+    'scenario-passive',
+    'scenario-wake',
+    'scenario-continuous',
+    'scenario-title',
+    'scenario-state',
+    'scenario-stage',
+    'start-scenario',
+    'stop-scenario',
+    'event-log',
   ]) {
     assert.match(html, new RegExp(`id=["']${id}["']`), `missing #${id}`);
   }
+  assert.match(html, /被动响应型/);
+  assert.match(html, /用户唤醒型/);
+  assert.match(html, /持续监听型/);
   assert.match(html, /<script[^>]+type=["']module["'][^>]+src=["']\.\/src\/app\.js["']/);
 });
 
@@ -68,6 +83,9 @@ test('frontend entrypoint uses local MediaPipe runtime and model', async () => {
   assert.match(source, /runningMode:\s*['"]VIDEO['"]/);
   assert.match(source, /getUserMedia/);
   assert.match(source, /getTracks\(\)/);
+  assert.match(source, /\.\/gesture-trigger\.js/);
+  assert.match(source, /\.\/scenario-engine\.js/);
+  assert.match(source, /\.\/demo-view\.js/);
 });
 
 test('local server and README document the exact start flow', async () => {

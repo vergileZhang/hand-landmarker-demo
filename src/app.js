@@ -1,5 +1,8 @@
 import { FilesetResolver, GestureRecognizer } from '../vendor/mediapipe/vision_bundle.mjs';
 import { GestureSmoother, resolveGesture } from './gesture-classifier.js';
+import { GestureTrigger } from './gesture-trigger.js';
+import { ScenarioEngine } from './scenario-engine.js';
+import { DemoView } from './demo-view.js';
 
 const HAND_CONNECTIONS = [
   [0, 1], [1, 2], [2, 3], [3, 4],
@@ -13,14 +16,28 @@ const elements = Object.fromEntries([
   'camera', 'overlay', 'viewer', 'empty-state', 'start-camera', 'stop-camera',
   'model-status', 'camera-status', 'hand-count', 'handedness', 'gesture-label',
   'gesture-confidence', 'confidence-fill', 'error-message',
+  'scenario-passive', 'scenario-wake', 'scenario-continuous', 'scenario-title',
+  'scenario-state', 'scenario-stage', 'start-scenario', 'stop-scenario', 'event-log',
+  'passive-stage', 'passive-result', 'wake-stage', 'live-scene', 'live-product',
+  'live-follow', 'continuous-stage', 'document-page', 'document-page-label',
 ].map((id) => [id, document.getElementById(id)]));
 
 const context = elements.overlay.getContext('2d');
 const smoothers = [new GestureSmoother(5), new GestureSmoother(5)];
+const actionGate = new GestureTrigger({
+  stableFrames: 5, confidenceThreshold: 0.7, cooldownMs: 800,
+});
+const wakeGate = new GestureTrigger({
+  stableFrames: 5, confidenceThreshold: 0.7, cooldownMs: 800, minimumHoldMs: 800,
+});
+const scenarioEngine = new ScenarioEngine();
+const demoView = new DemoView(elements);
 let gestureRecognizer = null;
 let mediaStream = null;
 let animationFrame = null;
 let lastVideoTime = -1;
+let lastRecognitionAt = -Infinity;
+let selectedScenario = 'passive';
 
 function setModelStatus(label, state = '') {
   elements['model-status'].textContent = label;
@@ -108,7 +125,7 @@ function renderResults(results) {
     elements['gesture-label'].textContent = '未检测到手';
     elements['gesture-confidence'].textContent = '0%';
     elements['confidence-fill'].style.width = '0%';
-    return;
+    return { label: '未知', confidence: 0 };
   }
 
   const labels = [];
@@ -129,6 +146,18 @@ function renderResults(results) {
   const confidence = Math.round(primary.confidence * 100);
   elements['gesture-confidence'].textContent = `${confidence}%`;
   elements['confidence-fill'].style.width = `${confidence}%`;
+  return primary;
+}
+
+function applyScenarioAction(action) {
+  if (!action) return;
+  demoView.applyAction(action);
+  demoView.renderState(scenarioEngine.getSnapshot());
+  if (['summary.save', 'summary.cancel', 'summary.defer', 'confirmation.timeout',
+    'document.control.stopped'].includes(action.type)) {
+    stopCamera({ preserveScenarioState: true });
+    demoView.renderState(scenarioEngine.getSnapshot());
+  }
 }
 
 function predictFrame() {
@@ -137,13 +166,21 @@ function predictFrame() {
     return;
   }
 
-  if (elements.camera.currentTime !== lastVideoTime) {
+  const now = performance.now();
+  const isWakeStandby = scenarioEngine.state === 'wake-standby';
+  const minimumInterval = isWakeStandby ? 200 : 0;
+  if (elements.camera.currentTime !== lastVideoTime && now - lastRecognitionAt >= minimumInterval) {
     lastVideoTime = elements.camera.currentTime;
+    lastRecognitionAt = now;
     try {
-      renderResults(gestureRecognizer.recognizeForVideo(elements.camera, performance.now()));
+      const primary = renderResults(gestureRecognizer.recognizeForVideo(elements.camera, now));
+      const gate = isWakeStandby ? wakeGate : actionGate;
+      const trigger = gate.update(primary, now);
+      if (trigger) applyScenarioAction(scenarioEngine.handleGesture(trigger.label, now));
+      applyScenarioAction(scenarioEngine.tick(now));
     } catch (error) {
       setError(`识别运行失败：${error.message}`);
-      stopCamera();
+      stopCamera({ preserveScenarioState: true });
       return;
     }
   }
@@ -151,7 +188,8 @@ function predictFrame() {
 }
 
 async function startCamera() {
-  if (!gestureRecognizer || mediaStream) return;
+  if (!gestureRecognizer) return false;
+  if (mediaStream) return true;
   setError();
   elements['start-camera'].disabled = true;
   setCameraStatus('正在请求权限');
@@ -173,7 +211,9 @@ async function startCamera() {
     setCameraStatus('识别中', true);
     resetResult('正在识别');
     lastVideoTime = -1;
+    lastRecognitionAt = -Infinity;
     animationFrame = requestAnimationFrame(predictFrame);
+    return true;
   } catch (error) {
     mediaStream = null;
     elements['start-camera'].disabled = false;
@@ -182,10 +222,11 @@ async function startCamera() {
       ? '摄像头权限被拒绝，请在浏览器地址栏中允许访问后重试。'
       : `无法启动摄像头：${error.message}`;
     setError(message);
+    return false;
   }
 }
 
-function stopCamera() {
+function stopCamera({ preserveScenarioState = false } = {}) {
   if (animationFrame !== null) {
     cancelAnimationFrame(animationFrame);
     animationFrame = null;
@@ -202,6 +243,37 @@ function stopCamera() {
   elements['stop-camera'].disabled = true;
   setCameraStatus('已停止');
   resetResult();
+  actionGate.reset();
+  wakeGate.reset();
+  if (!preserveScenarioState && scenarioEngine.state !== 'inactive') {
+    const action = scenarioEngine.stop('camera-stopped');
+    demoView.applyAction(action);
+    demoView.renderState(scenarioEngine.getSnapshot());
+  }
+}
+
+async function startScenario() {
+  const started = await startCamera();
+  if (!started) return;
+  actionGate.reset();
+  wakeGate.reset();
+  demoView.reset(selectedScenario);
+  scenarioEngine.start(selectedScenario, performance.now());
+  demoView.renderState(scenarioEngine.getSnapshot());
+}
+
+function stopScenario() {
+  const action = scenarioEngine.stop('user');
+  if (action) demoView.applyAction(action);
+  stopCamera({ preserveScenarioState: true });
+  demoView.renderState(scenarioEngine.getSnapshot());
+}
+
+function selectScenario(mode) {
+  if (scenarioEngine.state !== 'inactive') stopScenario();
+  selectedScenario = mode;
+  demoView.reset(mode);
+  demoView.renderState(scenarioEngine.getSnapshot());
 }
 
 async function loadModel() {
@@ -226,6 +298,7 @@ async function loadModel() {
     });
     setModelStatus('已就绪', 'ready');
     elements['start-camera'].disabled = false;
+    demoView.renderState(scenarioEngine.getSnapshot());
   } catch (error) {
     setModelStatus('加载失败', 'error');
     setError(`模型加载失败：${error.message}`);
@@ -233,7 +306,12 @@ async function loadModel() {
 }
 
 elements['start-camera'].addEventListener('click', startCamera);
-elements['stop-camera'].addEventListener('click', stopCamera);
+elements['stop-camera'].addEventListener('click', () => stopCamera());
+elements['start-scenario'].addEventListener('click', startScenario);
+elements['stop-scenario'].addEventListener('click', stopScenario);
+for (const mode of ['passive', 'wake', 'continuous']) {
+  elements[`scenario-${mode}`].addEventListener('click', () => selectScenario(mode));
+}
 window.addEventListener('beforeunload', stopCamera);
 window.addEventListener('resize', resizeCanvas);
 
